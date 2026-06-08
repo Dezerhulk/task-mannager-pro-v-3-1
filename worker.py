@@ -27,7 +27,12 @@ async def worker() -> None:
                 db.commit()
 
                 await asyncio.sleep(2)
-                task.result = task.data.upper()
+
+                text_to_process = (task.data or "").strip()
+                if not text_to_process and (task.title or task.description):
+                    text_to_process = " ".join(part for part in (task.title, task.description) if part).strip()
+
+                task.result = text_to_process.upper() if text_to_process else "TASK COMPLETED"
                 task.status = TaskState.done.value
                 db.commit()
                 logger.info("Task %s completed", task_id)

@@ -22,7 +22,15 @@ from auth import (
     verify_refresh_token,
     verify_token,
 )
-from config import ADMIN_PASSWORD, ADMIN_USERNAME, LOG_FILE
+from config import (
+    ADMIN_PASSWORD,
+    ADMIN_USERNAME,
+    CORS_ALLOW_CREDENTIALS,
+    CORS_ALLOW_HEADERS,
+    CORS_ALLOW_METHODS,
+    CORS_ORIGINS,
+    LOG_FILE,
+)
 from database import (
     Project,
     ProjectMember,
@@ -129,10 +137,10 @@ app = FastAPI(lifespan=lifespan)
 # Allow the local frontend dev server to call the API during development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=CORS_ALLOW_CREDENTIALS,
+    allow_methods=CORS_ALLOW_METHODS,
+    allow_headers=CORS_ALLOW_HEADERS,
 )
 
 

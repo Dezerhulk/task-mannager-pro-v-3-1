@@ -50,7 +50,7 @@ def test_user_data():
     return {
         "username": "testuser",
         "email": "test@example.com",
-        "password": "password123",
+        "password": "StrongPass123!",
         "role": "user",
     }
 
