@@ -62,6 +62,38 @@ def test_forbidden_task_access(client):
     assert response.status_code == 403
 
 
+def test_create_and_list_project_tasks(client):
+    token = get_token(client, username="alice", password="Alice12345!")
+
+    project_response = client.post(
+        "/api/projects",
+        json={"title": "Alpha Board", "description": "Project task smoke test"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert project_response.status_code == 200
+    project_id = project_response.json()["id"]
+
+    task_response = client.post(
+        f"/api/projects/{project_id}/tasks",
+        json={"title": "Write release notes", "description": "Prepare summary for release", "assignee": "alice"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert task_response.status_code == 200
+    task_id = task_response.json()["task_id"]
+
+    list_response = client.get(
+        f"/api/projects/{project_id}/tasks",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert list_response.status_code == 200
+
+    tasks = {item["id"]: item for item in list_response.json()}
+    assert task_id in tasks
+    assert tasks[task_id]["title"] == "Write release notes"
+    assert tasks[task_id]["description"] == "Prepare summary for release"
+    assert tasks[task_id]["project_id"] == project_id
+
+
 def test_rate_limit(monkeypatch):
     monkeypatch.setenv("RATE_LIMIT", "1")
 

@@ -1,7 +1,9 @@
 """Configuration management using Pydantic settings."""
 
-from typing import Optional
+import json
 from datetime import timedelta
+from typing import Optional
+
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -47,10 +49,39 @@ class Settings(BaseSettings):
         return self
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
+    cors_origins: str = "http://localhost:3000,http://localhost:8000"
     cors_allow_credentials: bool = True
-    cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    cors_allow_headers: list[str] = ["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"]
+    cors_allow_methods: str = "GET,POST,PUT,DELETE,OPTIONS"
+    cors_allow_headers: str = "Authorization,Content-Type,Accept,Origin,X-Requested-With"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return self._parse_csv_list(self.cors_origins)
+
+    @property
+    def cors_allow_methods_list(self) -> list[str]:
+        return self._parse_csv_list(self.cors_allow_methods)
+
+    @property
+    def cors_allow_headers_list(self) -> list[str]:
+        return self._parse_csv_list(self.cors_allow_headers)
+
+    @staticmethod
+    def _parse_csv_list(value: str | list[str]) -> list[str]:
+        if isinstance(value, list):
+            return value
+        text = value.strip() if isinstance(value, str) else ""
+        if not text:
+            return []
+        if text.startswith("["):
+            return json.loads(text)
+        return [item.strip() for item in text.split(",") if item.strip()]
+
+    @model_validator(mode="after")
+    def validate_cors(self):
+        if "*" in self.cors_origins_list:
+            raise ValueError("CORS origins must not contain '*' in production. Configure explicit origins instead.")
+        return self
 
     # Logging
     log_level: str = "INFO"

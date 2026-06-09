@@ -29,7 +29,7 @@ async def worker() -> None:
                 await asyncio.sleep(2)
 
                 text_to_process = (task.data or "").strip()
-                if not text_to_process and (task.title or task.description):
+                if not text_to_process:
                     text_to_process = " ".join(part for part in (task.title, task.description) if part).strip()
 
                 task.result = text_to_process.upper() if text_to_process else "TASK COMPLETED"
