@@ -121,7 +121,7 @@ def verify_refresh_token(db: Session, token: str) -> str:
     token_record = db.query(DbRefreshToken).filter(DbRefreshToken.jti == jti).first()
     if not token_record or token_record.revoked:
         raise HTTPException(status_code=401, detail="Refresh token revoked or invalid")
-    if token_record.expires_at < datetime.utcnow():
+    if token_record.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Refresh token expired")
     return username
 

@@ -2,6 +2,8 @@ import importlib
 import sys
 import time
 
+import pytest
+
 
 def get_token(client, username="alice", password="Alice12345!"):
     # Try to register first (will fail if user exists, which is fine)
@@ -18,6 +20,17 @@ def get_token(client, username="alice", password="Alice12345!"):
 def test_token_creation(client):
     token = get_token(client)
     assert token is not None
+
+
+def test_missing_secret_key_raises(monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "change-me-in-production")
+
+    for module_name in ["config"]:
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        import config
 
 
 def test_create_task_and_get_status(client):

@@ -9,6 +9,7 @@ def test_env(monkeypatch, tmp_path):
     monkeypatch.setenv("SECRET_KEY", "testsecretkey_long_and_secure_12345")
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'test_tasks.db'}")
     monkeypatch.setenv("LOG_FILE", str(tmp_path / 'test_app.log'))
+    monkeypatch.setenv("QUEUE_DB_PATH", str(tmp_path / 'test_queue.db'))
     monkeypatch.setenv("RATE_LIMIT", "100")
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_SECONDS", "3600")
 

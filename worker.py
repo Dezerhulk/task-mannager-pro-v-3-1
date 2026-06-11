@@ -48,4 +48,4 @@ async def worker() -> None:
             except SQLAlchemyError:
                 logger.exception("Failed to update error status for task %s", task_id)
         finally:
-            queue.task_done()
+            await queue.task_done()

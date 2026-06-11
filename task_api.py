@@ -22,15 +22,7 @@ from auth import (
     verify_refresh_token,
     verify_token,
 )
-from config import (
-    ADMIN_PASSWORD,
-    ADMIN_USERNAME,
-    CORS_ALLOW_CREDENTIALS,
-    CORS_ALLOW_HEADERS,
-    CORS_ALLOW_METHODS,
-    CORS_ORIGINS,
-    LOG_FILE,
-)
+from config import ADMIN_PASSWORD, ADMIN_USERNAME, LOG_FILE
 from database import (
     Project,
     ProjectMember,
@@ -137,10 +129,10 @@ app = FastAPI(lifespan=lifespan)
 # Allow the local frontend dev server to call the API during development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=CORS_ALLOW_CREDENTIALS,
-    allow_methods=CORS_ALLOW_METHODS,
-    allow_headers=CORS_ALLOW_HEADERS,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -162,7 +154,7 @@ async def healthz():
     return {"status": "ok"}
 
 
-@app.post("/register", response_model=TokenResponse, dependencies=[rate_limiter("register")])
+@app.post("/api/auth/register", response_model=TokenResponse, dependencies=[rate_limiter("register")])
 async def register(register_request: RegisterRequest, db=Depends(get_db)):
     existing_user = db.query(User).filter(User.username == register_request.username).first()
     if existing_user:
@@ -192,12 +184,12 @@ async def register(register_request: RegisterRequest, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to register user") from err
 
 
-@app.post("/api/auth/register", response_model=TokenResponse, dependencies=[rate_limiter("register")])
-async def api_register(register_request: RegisterRequest, db=Depends(get_db)):
+@app.post("/register", response_model=TokenResponse, dependencies=[rate_limiter("register")])
+async def register_legacy(register_request: RegisterRequest, db=Depends(get_db)):
     return await register(register_request, db)
 
 
-@app.post("/login", response_model=TokenResponse, dependencies=[rate_limiter("login")])
+@app.post("/api/auth/login", response_model=TokenResponse, dependencies=[rate_limiter("login")])
 async def login(login_request: LoginRequest, db=Depends(get_db)):
     user = authenticate_user(db, login_request.username, login_request.password)
     if not user:
@@ -210,8 +202,8 @@ async def login(login_request: LoginRequest, db=Depends(get_db)):
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
-@app.post("/api/auth/login", response_model=TokenResponse, dependencies=[rate_limiter("login")])
-async def api_login(login_request: LoginRequest, db=Depends(get_db)):
+@app.post("/login", response_model=TokenResponse, dependencies=[rate_limiter("login")])
+async def login_legacy(login_request: LoginRequest, db=Depends(get_db)):
     return await login(login_request, db)
 
 
