@@ -10,7 +10,14 @@ def _split_csv(value: str) -> list[str]:
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
-PLACEHOLDER_SECRET_VALUES = {"", "replace-me-with-a-long-random-secret", "change-me-in-production", "your-secret-key-change-in-production"}
+PLACEHOLDER_SECRET_VALUES = {
+    "",
+    "replace-me-with-a-long-random-secret",
+    "change-me-in-production",
+    "change_me_in_production",
+    "your-secret-key-change-in-production",
+    "dev-secret-change-me-please-123456",
+}
 if not SECRET_KEY or SECRET_KEY.lower() in {value.lower() for value in PLACEHOLDER_SECRET_VALUES}:
     raise RuntimeError("SECRET_KEY must be set to a non-placeholder value in .env or environment")
 
@@ -26,6 +33,7 @@ ACCESS_TOKEN_EXPIRE_SECONDS = int(os.getenv("ACCESS_TOKEN_EXPIRE_SECONDS", "3600
 REFRESH_TOKEN_EXPIRE_SECONDS = int(os.getenv("REFRESH_TOKEN_EXPIRE_SECONDS", "1209600"))
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./tasks.db")
 LOG_FILE = os.getenv("LOG_FILE", "app.log")
+QUEUE_BACKEND = os.getenv("QUEUE_BACKEND", "sqlite").lower()
 QUEUE_DB_PATH = os.getenv("QUEUE_DB_PATH", "queue.db")
 DEFAULT_CORS_ORIGINS = ["http://localhost:3000", "http://localhost:8000"]
 CORS_ORIGINS = _split_csv(os.getenv("CORS_ORIGINS", ",".join(DEFAULT_CORS_ORIGINS)))

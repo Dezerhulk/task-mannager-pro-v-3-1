@@ -73,7 +73,7 @@ The `docker-compose.yml` file mounts the project folder into `/app`, passes `.en
 Use `.env` or environment variables to configure the service.
 
 ```env
-SECRET_KEY=dev-secret-change-me-please-123456
+SECRET_KEY=
 DATABASE_URL=sqlite:///./tasks.db
 # For PostgreSQL, use a URL like:
 # DATABASE_URL=postgresql://user:password@localhost:5432/task_db
@@ -86,7 +86,7 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=ChangeMeStrongPassword1!
 ```
 
-Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` to seed an administrator account on startup.
+Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` to seed an administrator account on startup. For production, set `SECRET_KEY` to a strong random value and, if you need a shared task queue, configure `QUEUE_BACKEND=redis` with `REDIS_URL`.
 
 ## New API routes
 

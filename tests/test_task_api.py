@@ -7,10 +7,10 @@ import pytest
 
 def get_token(client, username="alice", password="Alice12345!"):
     # Try to register first (will fail if user exists, which is fine)
-    client.post("/register", json={"username": username, "password": password})
-    
+    client.post("/api/auth/register", json={"username": username, "password": password})
+
     # Now login
-    response = client.post("/login", json={"username": username, "password": password})
+    response = client.post("/api/auth/login", json={"username": username, "password": password})
     assert response.status_code == 200
     token = response.json().get("access_token")
     assert token
@@ -20,6 +20,20 @@ def get_token(client, username="alice", password="Alice12345!"):
 def test_token_creation(client):
     token = get_token(client)
     assert token is not None
+
+
+def test_legacy_auth_routes_removed(client):
+    response = client.post(
+        "/register",
+        json={"username": "legacy", "password": "LegacyPass123!"},
+    )
+    assert response.status_code == 404
+
+    response = client.post(
+        "/login",
+        json={"username": "legacy", "password": "LegacyPass123!"},
+    )
+    assert response.status_code == 404
 
 
 def test_missing_secret_key_raises(monkeypatch):

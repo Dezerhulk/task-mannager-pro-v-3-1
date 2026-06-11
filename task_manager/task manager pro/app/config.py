@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     # Security
-    secret_key: str = Field(..., validation_alias="SECRET_KEY")
+    secret_key: str = Field(default="dev-secret-key-change-me", validation_alias="SECRET_KEY")
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
@@ -44,9 +44,18 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_secret_key(self):
-        placeholder_values = {"", "replace-me-with-a-long-random-secret", "change-me-in-production", "your-secret-key-change-in-production"}
-        if self.secret_key.strip().lower() in {value.lower() for value in placeholder_values}:
-            raise ValueError("SECRET_KEY must be set to a non-placeholder value")
+        placeholder_values = {
+            "",
+            "replace-me-with-a-long-random-secret",
+            "change-me-in-production",
+            "your-secret-key-change-in-production",
+            "dev-secret-key-change-me",
+        }
+        normalized = self.secret_key.strip().lower() if self.secret_key else ""
+        if normalized in {value.lower() for value in placeholder_values}:
+            if self.environment.lower() in {"production", "prod"}:
+                raise ValueError("SECRET_KEY must be set to a non-placeholder value")
+            self.secret_key = "dev-secret-key-change-me"
         return self
 
     # CORS

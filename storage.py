@@ -12,12 +12,12 @@ from uuid import uuid4
 
 from fastapi import Depends, HTTPException, Request
 
-from config import QUEUE_DB_PATH, RATE_LIMIT, RATE_LIMIT_BACKEND, RATE_LIMIT_WINDOW_SECONDS, REDIS_URL
+from config import QUEUE_BACKEND, QUEUE_DB_PATH, RATE_LIMIT, RATE_LIMIT_BACKEND, RATE_LIMIT_WINDOW_SECONDS, REDIS_URL
 
 logger = logging.getLogger("task_app.storage")
 
 
-class PersistentQueue:
+class SQLiteQueue:
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
         self._condition = asyncio.Condition()
@@ -66,6 +66,30 @@ class PersistentQueue:
             self._condition.notify_all()
 
 
+class RedisQueue:
+    def __init__(self, redis_url: str) -> None:
+        try:
+            import redis  # type: ignore
+        except ImportError as exc:  # pragma: no cover - environment dependent
+            raise RuntimeError("redis package is required for Redis queue support") from exc
+
+        self._client = redis.Redis.from_url(redis_url, decode_responses=False)
+        self._client.ping()
+        self._key = "task_queue"
+
+    async def put(self, item: str) -> None:
+        await asyncio.to_thread(self._client.lpush, self._key, item)
+
+    async def get(self) -> str:
+        result = await asyncio.to_thread(self._client.brpop, self._key, timeout=5)
+        if not result:
+            return await self.get()
+        return result[1].decode("utf-8") if isinstance(result[1], bytes) else result[1]
+
+    async def task_done(self) -> None:
+        return None
+
+
 class InMemoryRateLimiter:
     def __init__(self) -> None:
         self._store: Dict[str, Dict[str, List[float]]] = {}
@@ -106,7 +130,10 @@ class RedisRateLimiter:
         return int(current_count) < limit
 
 
-queue = PersistentQueue(QUEUE_DB_PATH)
+if QUEUE_BACKEND == "redis" and REDIS_URL:
+    queue = RedisQueue(REDIS_URL)
+else:
+    queue = SQLiteQueue(QUEUE_DB_PATH)
 
 if RATE_LIMIT_BACKEND == "redis" and REDIS_URL:
     rate_limiter_backend = RedisRateLimiter(REDIS_URL)
