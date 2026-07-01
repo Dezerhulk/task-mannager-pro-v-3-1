@@ -109,7 +109,7 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Edit .env with your settings (SECRET_KEY must be changed!)
+# Generate SECRET_KEY: openssl rand -hex 32 — paste the value into .env (do not use a placeholder)
 ```
 
 ### 3. Run Development Server
@@ -281,8 +281,19 @@ API_HOST=0.0.0.0
 API_PORT=8000
 ENVIRONMENT=development
 
-# Security (⚠️  CHANGE IN PRODUCTION!)
-SECRET_KEY=your-secret-key-here
+# Security — generate with: openssl rand -hex 32
+# Do not copy a placeholder value; set a unique secret before running the app.
+SECRET_KEY=
+
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# CORS (restrict in production)
+CORS_ORIGINS=["http://localhost:3000"]
+
+# Logging
+LOG_LEVEL=INFO
+```
 
 ## 🖥️ Frontend Integration
 
@@ -297,16 +308,6 @@ npm run dev
 ```
 
 By default it uses `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`.
-
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
-
-# CORS (restrict in production)
-CORS_ORIGINS=["http://localhost:3000"]
-
-# Logging
-LOG_LEVEL=INFO
-```
 
 ## 🔄 Database Migrations (Alembic)
 
@@ -446,7 +447,7 @@ git push origin feature/my-feature
 
 ## 🎓 Learning Resources
 
-- **Auth**: Check `app/auth.py` and `routers/auth.py`
+- **Auth**: Check `app/auth.py` and `app/routers/auth.py`
 - **Permissions**: Check `app/permissions.py`
 - **Models**: Check `app/models_pro.py`
 - **Config**: Check `app/config.py`
@@ -746,7 +747,9 @@ SQL_ECHO=False                  # Log SQL
 API_HOST=0.0.0.0
 API_PORT=8000
 ENVIRONMENT=development
-SECRET_KEY=your-secret-key
+# Security — generate with: openssl rand -hex 32
+# Do not copy a placeholder value; set a unique secret before running the app.
+SECRET_KEY=
 ```
 
 ## 🐛 Troubleshooting

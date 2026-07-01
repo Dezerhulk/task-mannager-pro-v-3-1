@@ -27,7 +27,7 @@ async def main():
         register_data = {
             "username": "john_doe",
             "email": "john@example.com",
-            "password": "securepass123",
+            "password": "SecurePass1!",
         }
         response = await client.post(
             f"{BASE_URL}/api/auth/register",
@@ -44,9 +44,9 @@ async def main():
         print("\n2. Logging in...")
         response = await client.post(
             f"{BASE_URL}/api/auth/login",
-            params={
+            json={
                 "email": "john@example.com",
-                "password": "securepass123",
+                "password": "SecurePass1!",
             },
         )
         if response.status_code == 200:
@@ -78,18 +78,25 @@ async def main():
         print("\n4. Refreshing access token...")
         response = await client.post(
             f"{BASE_URL}/api/auth/refresh",
-            params={"refresh_token": refresh_token},
+            json={"refresh_token": refresh_token},
         )
         if response.status_code == 200:
             new_tokens = response.json()
+            access_token = new_tokens["access_token"]
+            refresh_token = new_tokens["refresh_token"]
+            headers = {"Authorization": f"Bearer {access_token}"}
             print(f"✅ Token refreshed successfully")
-            print(f"   New access token: {new_tokens['access_token'][:20]}...")
+            print(f"   New access token: {access_token[:20]}...")
         else:
             print(f"❌ Refresh failed: {response.text}")
 
         # Step 5: Logout
         print("\n5. Logging out...")
-        response = await client.post(f"{BASE_URL}/api/auth/logout")
+        response = await client.post(
+            f"{BASE_URL}/api/auth/logout",
+            headers=headers,
+            json={"refresh_token": refresh_token},
+        )
         if response.status_code == 200:
             print(f"✅ Logged out successfully")
         else:

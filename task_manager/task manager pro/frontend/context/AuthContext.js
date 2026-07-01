@@ -34,10 +34,10 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  const login = async ({ username, password }) => {
+  const login = async ({ email, password }) => {
     const data = await apiClient('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     });
 
     setTokens(data.access_token, data.refresh_token);

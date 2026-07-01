@@ -81,10 +81,10 @@ class RedisQueue:
         await asyncio.to_thread(self._client.lpush, self._key, item)
 
     async def get(self) -> str:
-        result = await asyncio.to_thread(self._client.brpop, self._key, timeout=5)
-        if not result:
-            return await self.get()
-        return result[1].decode("utf-8") if isinstance(result[1], bytes) else result[1]
+        while True:
+            result = await asyncio.to_thread(self._client.brpop, self._key, timeout=5)
+            if result:
+                return result[1].decode("utf-8") if isinstance(result[1], bytes) else result[1]
 
     async def task_done(self) -> None:
         return None
@@ -130,15 +130,23 @@ class RedisRateLimiter:
         return int(current_count) < limit
 
 
-if QUEUE_BACKEND == "redis" and REDIS_URL:
+if QUEUE_BACKEND == "redis":
+    if not REDIS_URL:
+        raise RuntimeError("QUEUE_BACKEND=redis requires REDIS_URL to be set in .env or environment")
     queue = RedisQueue(REDIS_URL)
-else:
+elif QUEUE_BACKEND == "sqlite":
     queue = SQLiteQueue(QUEUE_DB_PATH)
-
-if RATE_LIMIT_BACKEND == "redis" and REDIS_URL:
-    rate_limiter_backend = RedisRateLimiter(REDIS_URL)
 else:
+    raise RuntimeError(f"Unsupported QUEUE_BACKEND: {QUEUE_BACKEND!r}")
+
+if RATE_LIMIT_BACKEND == "redis":
+    if not REDIS_URL:
+        raise RuntimeError("RATE_LIMIT_BACKEND=redis requires REDIS_URL to be set in .env or environment")
+    rate_limiter_backend = RedisRateLimiter(REDIS_URL)
+elif RATE_LIMIT_BACKEND == "memory":
     rate_limiter_backend = InMemoryRateLimiter()
+else:
+    raise RuntimeError(f"Unsupported RATE_LIMIT_BACKEND: {RATE_LIMIT_BACKEND!r}")
 
 
 def rate_limiter(route_key: str = "default") -> Callable:

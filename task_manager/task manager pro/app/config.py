@@ -1,11 +1,15 @@
 """Configuration management using Pydantic settings."""
 
 import json
+import logging
+import os
 from datetime import timedelta
 from typing import Optional
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -28,7 +32,7 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     # Security
-    secret_key: str = Field(default="dev-secret-key-change-me", validation_alias="SECRET_KEY")
+    secret_key: str = Field(default="", validation_alias="SECRET_KEY")
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
@@ -49,14 +53,25 @@ class Settings(BaseSettings):
             "replace-me-with-a-long-random-secret",
             "change-me-in-production",
             "your-secret-key-change-in-production",
+            "your-super-secret-key-change-this-in-production",
             "dev-secret-key-change-me",
+            "dev-secret-key-change-me-please",
         }
         normalized = self.secret_key.strip().lower() if self.secret_key else ""
-        if normalized in {value.lower() for value in placeholder_values}:
-            if self.environment.lower() in {"production", "prod"}:
-                raise ValueError("SECRET_KEY must be set to a non-placeholder value")
-            self.secret_key = "dev-secret-key-change-me"
-        return self
+        if normalized not in {value.lower() for value in placeholder_values}:
+            return self
+        env = self.environment.lower()
+        explicit_environment = "environment" in self.model_fields_set
+        env_from_os = os.getenv("ENVIRONMENT", "").strip().lower()
+        explicit_development = env in {"development", "dev"} and (
+            explicit_environment or env_from_os in {"development", "dev"}
+        )
+        if env in {"production", "prod"}:
+            raise ValueError("SECRET_KEY must be set to a non-placeholder value in production")
+
+        raise ValueError(
+            "SECRET_KEY must be set to a non-placeholder value; placeholder or empty secrets are not allowed"
+        )
 
     # CORS
     cors_origins: str = "http://localhost:3000,http://localhost:8000"
@@ -90,7 +105,12 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_cors(self):
         if "*" in self.cors_origins_list:
-            raise ValueError("CORS origins must not contain '*' in production. Configure explicit origins instead.")
+            env = self.environment.lower()
+            if env in {"production", "prod", "staging"}:
+                raise ValueError(
+                    "CORS origins must not contain '*' in production or staging. "
+                    "Configure explicit origins instead."
+                )
         return self
 
     # Logging

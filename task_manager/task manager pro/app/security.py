@@ -3,7 +3,6 @@
 import re
 import time
 import threading
-from typing import Optional
 
 from fastapi import Request, Depends, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware

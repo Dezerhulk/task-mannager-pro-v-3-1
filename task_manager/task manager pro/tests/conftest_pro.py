@@ -1,10 +1,15 @@
 """Pytest configuration and fixtures for Task Manager Pro."""
 
+import os
+
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
+
+os.environ.setdefault("ENVIRONMENT", "development")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only")
 
 from app.database_pro import Base, get_db
 from app.main_pro import app

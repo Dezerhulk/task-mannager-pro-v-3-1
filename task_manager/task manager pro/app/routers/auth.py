@@ -39,6 +39,13 @@ from ..security import auth_rate_limit
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
+def _as_utc(dt: datetime) -> datetime:
+    """Normalize datetimes for comparison (SQLite may return naive values)."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 @router.post(
     "/register",
     response_model=UserResponse,
@@ -86,13 +93,13 @@ async def login(payload: LoginRequest, request: Request, db: Session = Depends(g
         )
 
     access_token = create_access_token(user.id)
-    refresh_token, jti = create_refresh_token(user.id)
+    issued_refresh_token, jti = create_refresh_token(user.id)
     save_refresh_token(db, user.id, jti, datetime.now(timezone.utc) + settings.refresh_token_expire)
     create_audit_log(db, user.id, "user", "login")
 
     return TokenResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
+        refresh_token=issued_refresh_token,
     )
 
 
@@ -108,7 +115,11 @@ async def refresh_token(payload: RefreshRequest, db: Session = Depends(get_db)):
 
     user_id, jti = token_data
     refresh_record = get_refresh_token(db, jti)
-    if not refresh_record or refresh_record.is_revoked or refresh_record.expires_at < datetime.now(timezone.utc):
+    if (
+        not refresh_record
+        or refresh_record.is_revoked
+        or _as_utc(refresh_record.expires_at) < datetime.now(timezone.utc)
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token is invalid or revoked",
