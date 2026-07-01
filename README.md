@@ -1,6 +1,8 @@
 # PythonProject
 
-This repository contains a FastAPI task queue API with persistent storage, JWT authentication, and file logging.
+This repository contains a legacy root wrapper plus the canonical FastAPI service under [task_manager/task manager pro](task_manager/task%20manager%20pro).
+
+The primary application implementation now lives in the nested project tree, while the root-level modules are kept only as legacy compatibility shims during the migration.
 
 ## Features
 
@@ -33,17 +35,14 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-4. Start the API:
+4. Start the canonical API from the nested project:
 
 ```bash
-python main.py
+cd task_manager/task\ manager\ pro
+uvicorn app.main_pro:app --reload --port 8000
 ```
 
-Or directly with uvicorn:
-
-```bash
-uvicorn task_api:app --reload
-```
+The root-level [main.py](main.py) and [task_api.py](task_api.py) files are legacy entrypoints and may be removed after the migration is complete.
 
 ## Run tests
 

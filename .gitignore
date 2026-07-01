@@ -1,13 +1,51 @@
+# Virtual environments
 .venv/
+venv/
+env/
+.venv-1/
+
+# Python cache and compiled files
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.so
+
+# Test and coverage artifacts
+.pytest_cache/
+.htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Local databases and logs
 *.db
 *.sqlite3
 *.log
+tmp_*
+app.log
+
+# Environment files
 .env
+.env.*
+!.env.example
 secretkey.env
+
+# Editor and OS metadata
 .idea/
 .vscode/
 .DS_Store
+
+# Frontend build outputs
+node_modules/
+.next/
+frontend/node_modules/
+frontend/.next/
+
+# Generated project artifacts
+task_manager/.env
+task_manager/.pytest_cache/
+task_manager/task manager pro/.pytest_cache/
+task_manager/task manager pro/frontend/.next/
+task_manager/task manager pro/frontend/node_modules/
+
